@@ -1,17 +1,38 @@
 #include <stdio.h>
 #include <stdbool.h> 
 #include <string.h>
+
+char allocate(int a) {
+	char arrLength = malloc(a * sizeof(char));
+}
+
+void reallocate(char inputString, int capacity) {
+	char transportArray[2000] = "";
+	scanf("%s", &transportArray);
+	
+	/*while (length + 1 < capacity) {
+		length += 50;
+	}*/
+
+	if (transportArray != NULL)
+	{
+		int myLength = strlen(transportArray);
+		char temp = (char)realloc(inputString, myLength * sizeof(char));
+	}
+	else
+	{
+		printf("Write something down please.\n");
+	}
+}
+
 int main() {
 
 	bool editorRuns = true;
-	char currentConsole[30] = ""; //LinkedList use
-	char filenames[20] = "";
-	int length = 1;
+	char currentConsole[] = ""; //LinkedList use
+	int length = 35;// Початкове виділення пам'яті
 
-	if (filenames != "") {
-		length = sizeof(filenames) / sizeof(filenames[0]);
-	}
-
+	 // sizeof is as good as strlen
+	
 	while (editorRuns)
 	{
 		int userInput;
@@ -19,56 +40,71 @@ int main() {
 		scanf("%d", &userInput);
 		switch (userInput) {
 		case 1: {
-			char appendText[30];
+			char appendText[] = allocate(length);
 			printf("Enter text to append: \n");
-			scanf("%s", &appendText);
-			strcat(currentConsole, appendText, sizeof(appendText) - strlen(appendText) - 1);
+			reallocate(appendText, length);
+			
+			strcat(currentConsole, appendText); //sizeof optional , sizeof(currentConsole) - strlen(appendText) - 1
 			break;
 		}
 		case 2: {
 			printf("Start the new line: \n");
-			strcat(currentConsole, "\n", 2);
+			strcat(currentConsole, "\n");
 			break;
 		}
 		case 3: {
-			char nameSave[10];
-
+			char nameSave[] = allocate(length);
 			printf("Enter the file name for saving: \n");
 			scanf("%s", &nameSave);
 
-			for (int i = 0; i<length; i++)
-			{
-				if (nameSave == filenames[i])
-				{
-					printf("This file already exists. Try another name! \n");
-					break;
-				}
-			}
-			//File save current info
+			FILE* file;
+			file = fopen(nameSave, "w");
 
+			if (file != NULL)
+			{
+				printf("Creating new file");
+				fputs("Hello, files world!", file);
+			}
+
+			fputs(currentConsole, file);
+			fclose(file);
 			printf("Text have been saved successfully\n");
 			editorRuns = false;
 			break;
 		}
 		case 4: {
-			bool isInList = false;
-			char nameLoad[10];
-			printf("Enter the file name for saving: \n");
+			char nameLoad[] = allocate(length);
+			printf("Enter the file name for loading: \n");
 			scanf("%s", &nameLoad);
 
-			for(int i = 0; i<length; i++)
-			{
-				if (nameLoad == filenames[i])
-				{
-					isInList = true;
-					//File load 
+			FILE* file;
+			bool loadingFile = true;
+			char mystring[] = allocate(length);
+			file = fopen(nameLoad, "r");
 
-					printf("Text have been loaded successfully\n");
+			while (loadingFile) {
+				if (file == NULL)
+				{
+					printf("Error opening file. This file might not exist or is empty(");
 					break;
 				}
+				else
+				{
+					if (fgets(mystring, 10, file) != NULL)
+					{
+						fgets(mystring, 100, file);
+						printf("%s", mystring);
+						mystring[0] = '\0';
+					}
+					else
+					{
+						loadingFile = false;
+					}
+				}
 			}
+			fclose(file); 
 
-			printf("There is no such a file, try another one(");
+			printf("Text have been loaded successfully\n");
 			break;
 		}
 		case 5: {
@@ -79,7 +115,8 @@ int main() {
 		case 6: {
 			int line;
 			int index;
-			char text[10]; //Linked List or plain list insert in LList;
+			char text[] = allocate(length); //Linked List or plain list insert in LList;
+
 
 			printf("Insert the text by line and symbol index: \n");
 			printf("Enter line number: \n");
@@ -87,13 +124,14 @@ int main() {
 			printf("Enter symbol index: \n");
 			scanf("%i", &index);
 			printf("Enter text to insert: \n");
-			scanf("%s", text);
+			reallocate(text, length);
 			break;
 		}
 		case 7: {
-			char positions[10];
-			char seekingText[30];
+			char positions[] = allocate(length);
+			char seekingText[] = allocate(length);
 			printf("Enter text to search: \n");
+			reallocate(seekingText, length);
 			//Logic of seek
 			printf("Text is present in the position/positions: %s\n", positions);
 			break;
@@ -111,3 +149,5 @@ int main() {
 
 	return 0;
 }
+
+// should implement logic of freeing arrays for each case
