@@ -13,16 +13,19 @@ void reallocate(char inputString, int capacity) {
 	/*while (length + 1 < capacity) {
 		length += 50;
 	}*/
-
-	if (transportArray != NULL)
+	int myLength = strlen(transportArray);
+	if (transportArray != NULL && myLength-2 > capacity)
 	{
-		int myLength = strlen(transportArray);
 		char temp = (char)realloc(inputString, myLength * sizeof(char));
 	}
-	else
+	else if (transportArray == NULL)
 	{
-		printf("Write something down please.\n");
+		printf("Something went wrong( You wrote nothing or exceeded limit.\n");
 	}
+}
+
+void deallocate(char inputString) {
+	free(inputString);
 }
 
 int main() {
@@ -45,6 +48,7 @@ int main() {
 			reallocate(appendText, length);
 			
 			strcat(currentConsole, appendText); //sizeof optional , sizeof(currentConsole) - strlen(appendText) - 1
+			deallocate(appendText);
 			break;
 		}
 		case 2: {
@@ -70,6 +74,7 @@ int main() {
 			fclose(file);
 			printf("Text have been saved successfully\n");
 			editorRuns = false;
+			deallocate(nameSave);
 			break;
 		}
 		case 4: {
@@ -103,7 +108,7 @@ int main() {
 				}
 			}
 			fclose(file); 
-
+			deallocate(mystring);
 			printf("Text have been loaded successfully\n");
 			break;
 		}
@@ -125,6 +130,8 @@ int main() {
 			scanf("%i", &index);
 			printf("Enter text to insert: \n");
 			reallocate(text, length);
+			// Logic of inserting
+			deallocate(text);
 			break;
 		}
 		case 7: {
@@ -134,6 +141,7 @@ int main() {
 			reallocate(seekingText, length);
 			//Logic of seek
 			printf("Text is present in the position/positions: %s\n", positions);
+			deallocate(seekingText);
 			break;
 		}
 		case 8: {
@@ -142,7 +150,7 @@ int main() {
 			break;
 		}
 		default: {
-			printf("There is no such an optin, try again! \n");
+			printf("There is no such an option, try again! \n");
 		}
 	}
 	printf("Program is shutting down...");
