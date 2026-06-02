@@ -6,7 +6,7 @@ char allocate(int a) {
 	char arrLength = malloc(a * sizeof(char));
 }
 
-void reallocate(char inputString, int capacity) {
+int reallocate(char inputString, int capacity) {
 	char transportArray[2000] = "";
 	scanf("%s", &transportArray);
 	
@@ -22,6 +22,8 @@ void reallocate(char inputString, int capacity) {
 	{
 		printf("Something went wrong( You wrote nothing or exceeded limit.\n");
 	}
+
+	return myLength;
 }
 
 void deallocate(char inputString) {
@@ -45,9 +47,11 @@ int main() {
 		case 1: {
 			char appendText[] = allocate(length);
 			printf("Enter text to append: \n");
-			reallocate(appendText, length);
-			
-			strcat(currentConsole, appendText); //sizeof optional , sizeof(currentConsole) - strlen(appendText) - 1
+
+			int myLength = reallocate(appendText, length);
+			char appendConsole = (char)realloc(currentConsole, myLength * sizeof(char));
+
+			strncat(currentConsole, appendText, sizeof(currentConsole) - strlen(appendText) - 1); //sizeof optional , sizeof(currentConsole) - strlen(appendText) - 1
 			deallocate(appendText);
 			break;
 		}
@@ -98,7 +102,7 @@ int main() {
 					if (fgets(mystring, 10, file) != NULL)
 					{
 						fgets(mystring, 100, file);
-						printf("%s", mystring);
+						printf("%s\n", mystring);
 						mystring[0] = '\0';
 					}
 					else
@@ -129,9 +133,36 @@ int main() {
 			printf("Enter symbol index: \n");
 			scanf("%i", &index);
 			printf("Enter text to insert: \n");
-			reallocate(text, length);
-			// Logic of inserting
+			int myLength = reallocate(text, length);
+
+			char searchConsole = (char)realloc(currentConsole, myLength * sizeof(char));
+			// strncat(currentConsole, text, sizeof(currentConsole) - strlen(text) - 1);
+			
+			int allLines = 1;
+			for (int i = 0; i<strlen(currentConsole); i++)
+			{
+				if (currentConsole[i] == '\n') {
+					allLines += 1;}}
+			if (line>=1 && line<=allLines && line!=NULL && index!=NULL && text!=NULL && index>=0)
+			{
+				for (int j = strlen(currentConsole); j > index; j--)
+				{
+					currentConsole[j + strlen(text)] = currentConsole[j];
+				}
+				int textCounter = 0;
+				for (int a = index; a < index+strlen(text); a++)
+				{
+					currentConsole[a] = text[textCounter];
+					textCounter += 1;
+				}
+			}
+			else
+			{
+				printf("Either there is no such a line or index in the text, or you wrote nothing as text.\n Please, try again!");
+				break;
+			}
 			deallocate(text);
+			printf("Text is successfully inserted.");
 			break;
 		}
 		case 7: {
@@ -146,6 +177,7 @@ int main() {
 		}
 		case 8: {
 			printf("Clearing the console \n");
+			deallocate(currentConsole);
 			currentConsole[0] = '\0';
 			break;
 		}
@@ -157,5 +189,3 @@ int main() {
 
 	return 0;
 }
-
-// should implement logic of freeing arrays for each case
