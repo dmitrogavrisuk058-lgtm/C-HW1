@@ -175,22 +175,51 @@ int main() {
 		}
 		case 7: {
 			int** positions = allocate(length, sizeof(int));
+			int** exactLocations = allocate(length, sizeof(int));
 			char** seekingText = allocate(length, sizeof(char));
+
 			printf("Enter text to search: \n");
+
 			int myLength = reallocate(seekingText, length);
-			int index = 0;
+			int index1 = 0;
 			int myPosition = 0;
 
-			while (strstr(&currentConsole[index], seekingText) != NULL) {
+			while (strstr(&currentConsole[index1], seekingText) != NULL) {
 				char* location = strstr(&currentConsole, seekingText);
-				index = location - currentConsole;
-				positions[myPosition] = index;
+				index1 = location - currentConsole;
+				positions[myPosition] = index1;
 				myPosition++;
 			}
+
+			int counter = 0; int line = 0; int positionIndex = 0; int exactIndex = 0;
+
+			for (int i = 0; i < strlen(currentConsole); i++)
+			{
+				if (i == '\n'){
+					line++;
+					counter = 0; 
+					continue;
+				}
+				else if (i == positions[positionIndex])
+				{
+					positionIndex++;
+					exactLocations[exactIndex] = line; exactIndex++;
+					exactLocations[exactIndex] = counter;
+				}
+				if (positionIndex + 1 > 17)
+				{
+					break;
+				}
+				counter++;
+			}
 			//While strstr != Null шукаємо у певному рядку збіги за strstr. Якщо такий знайдений, то продовжуємо пошук з наступного індексу який вивів нам метод 
-			// Тепер коли у нас є адреса входження ітеруємося до індексу, дивимося рахуємо через counter індукс і скидаємо його коли отримуємо входження \n
-			printf("Text is present in the position/positions: %s\n", positions);
-			deallocate(seekingText);
+			// Тепер коли у нас є адреса входження ітеруємося до індексу, дивимося рахуємо через counter індекс і скидаємо його коли отримуємо входження \n
+			printf("Text is present in the position/positions: \n");
+			for (int b = 0; b < length; b+=2)
+			{
+				printf("Row:%i - Index:%i\n", exactLocations[b], exactLocations[b+1]);
+			}
+			deallocate(seekingText); deallocate(positions); deallocate(exactLocations); deallocate(myLength);
 			break;
 		}
 		case 8: {
