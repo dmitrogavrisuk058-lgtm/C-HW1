@@ -1,238 +1,231 @@
 #include <stdio.h>
 #include <stdbool.h> 
 #include <string.h>
+#include <stdlib.h>
 
-char** allocateChar(int a) {
-	char** arrStart = malloc(a * sizeof(char*));
+void* allocate(int a, size_t mySize) {
+	void* arrStart = malloc(a * mySize);
+	if (arrStart == NULL)
+	{
+		printf("Memory allocation error!\n");
+		exit(1);
+	}
 	return arrStart;
 }
 
-void** allocate(int a, size_t mySize) {
-	void** arrStart = malloc(a * mySize);
-	return arrStart;
-}
-
-int reallocate(char** inputString, int capacity) {
-	char transportArray[2000] = "";
-	scanf("%s", transportArray);
+int reallocate(char** inputString, int* capacity) {
+	char transportArray[1000] = "";
+	scanf_s("%999s", transportArray);
 	
-	/*while (length + 1 < capacity) {
-		length += 50;
-	}*/
 	int myLength = strlen(transportArray);
-	char* temp = 'a';
-	if (transportArray != NULL && myLength-2 > capacity)
+	
+	if (myLength + 1 > *capacity)
 	{
-		temp = (char*)realloc(inputString, myLength * sizeof(char*));
+		*capacity = myLength + 50;
+		char* addition = (char*)realloc(*inputString, *capacity * sizeof(char));
+		if (addition != NULL) { 
+			*inputString = addition; 
+		}
 	}
-	else if (transportArray == NULL)
-	{
-		printf("Something went wrong( You wrote nothing or exceeded limit.\n");
-	}
-
-	free(transportArray);
+	strcpy_s(*inputString, transportArray, 1000);
 	return myLength;
 }
 
-void deallocate(char** inputString) {
+void deallocate(void* inputString) {
 	free(inputString);
 }
 
-int main() {
+int main() 
+{
 
 	bool editorRuns = true;
-	char* currentConsole = ""; //LinkedList use
-	int length = 35;// Початкове виділення пам'яті
-
-	 // sizeof is as good as strlen
+	int length = 40;
+	char* currentConsole = allocate(length, sizeof(char));;
+	currentConsole[0] = '\0';
+	// Початкове виділення пам'яті
 	
 	while (editorRuns)
 	{
 		int userInput;
-		printf("Enter your option: \n");
-		scanf("%d", userInput);
+		printf("Enter your option. You can choose from: 1-Append, 2-New line, 3-Save, 4-Load, 5-Print, 6-Insert, 7-Search, 8-Clear, 9-Exit  \n");
+		scanf("%d", &userInput);
 		switch (userInput) {
-		case 1: {
-			char** appendText = allocate(length, sizeof(char));
-			printf("Enter text to append: \n");
+			case 1: {
 
-			int myLength = reallocate(appendText, length);
-			char/**/ appendConsole = (char)realloc(currentConsole, myLength * sizeof(char));
+				char* appendText = allocate(length, sizeof(char));
+				printf("Enter text to append: \n");
 
-			strncat(currentConsole, appendText, sizeof(currentConsole) - strlen(appendText) - 1); //sizeof optional , sizeof(currentConsole) - strlen(appendText) - 1
-			deallocate(appendText);
-			break;
-		}
-		case 2: {
-			printf("Start the new line: \n");
-			strcat(currentConsole, "\n");
-			break;
-		}
-		case 3: {
-			char** nameSave = allocate(length, sizeof(char));
-			printf("Enter the file name for saving: \n");
-			scanf("%s", nameSave);
+				int myLength = reallocate(&appendText, &length);
+				currentConsole = realloc(currentConsole, myLength * sizeof(char));
 
-			FILE* file;
-			file = fopen(nameSave, "w");
-
-			if (file != NULL)
-			{
-				printf("Creating new file");
-				fputs("Hello, files world!", file);
+				strcat(currentConsole, appendText); 
+				deallocate(appendText);
+				break;
 			}
+			case 2: {
+				printf("Start the new line: \n");
+				strcat(currentConsole, "\n");
+				break;
+			}
+			case 3: {
+				char* nameSave = allocate(length, sizeof(char));
+				printf("Enter the file name for saving: \n");
+				scanf("%s", nameSave);
 
-			fputs(currentConsole, file);
-			fclose(file);
-			printf("Text have been saved successfully\n");
-			editorRuns = false;
-			deallocate(nameSave);
-			break;
-		}
-		case 4: {
-			char** nameLoad = allocate(length, sizeof(char));
-			printf("Enter the file name for loading: \n");
-			scanf("%s", nameLoad);
+				FILE* file = fopen(nameSave, "w");
 
-			FILE* file;
-			bool loadingFile = true;
-			char** mystring[] = allocate(length, sizeof(char));
-			file = fopen(nameLoad, "r");
-
-			while (loadingFile) {
 				if (file == NULL)
 				{
-					printf("Error opening file. This file might not exist or is empty(");
-					break;
+					fputs(currentConsole, file);
+					fclose(file);
+					printf("Text have been saved successfully\n");
+					editorRuns = false;
+				}
+				else{
+					printf("Error with file opening occured(");}
+				deallocate(nameSave);
+				break;
+			}
+			case 4: {
+				char* nameLoad = allocate(length, sizeof(char));
+				printf("Enter the file name for loading: \n");
+				scanf("%s", nameLoad);
+
+				FILE* file = fopen(nameLoad, "r");
+				char* mystring = allocate(length, sizeof(char));
+
+				
+				if (file == NULL)
+				{
+					printf("Error opening file. This file might not exist or is empty(\n");
+					
 				}
 				else
 				{
-					if (fgets(mystring, 10, file) != NULL)
+					char* copyConsole = allocate(1000, sizeof(char));
+					strcpy(copyConsole, currentConsole);
+					currentConsole[0] = '\0';
+					while (fgets(mystring, 100, file) != NULL)
 					{
-						fgets(mystring, 100, file);
-						printf("%s\n", mystring);
-						mystring[0] = '\0';
+						strcat(currentConsole, mystring);
 					}
-					else
-					{
-						loadingFile = false;
-					}
+					strcat(currentConsole, copyConsole);
+					fclose(file);
+					printf("Text have been loaded successfully\n");
+					deallocate(copyConsole);
 				}
-			}
-			fclose(file); 
-			deallocate(mystring);
-			printf("Text have been loaded successfully\n");
-			break;
-		}
-		case 5: {
-			printf("Printing the current text console: %s\n", currentConsole);
-			break;
-		}
-		
-		case 6: {
-			int line;
-			int index;
-			char** text = allocate(length, sizeof(char)); //Linked List or plain list insert in LList;
-
-
-			printf("Insert the text by line and symbol index: \n");
-			printf("Enter line number: \n");
-			scanf("%i", line);
-			printf("Enter symbol index: \n");
-			scanf("%i", index);
-			printf("Enter text to insert: \n");
-			int myLength = reallocate(text, length);
-
-			char** searchConsole = (char)realloc(currentConsole, myLength * sizeof(char));
-			// strncat(currentConsole, text, sizeof(currentConsole) - strlen(text) - 1);
-			
-			int allLines = 1;
-			for (int i = 0; i<strlen(currentConsole); i++)
-			{
-				if (currentConsole[i] == '\n') {
-					allLines += 1;}}
-			if (line>=1 && line<=allLines && line!=NULL && index!=NULL && text!=NULL && index>=0)
-			{
-				for (int j = strlen(currentConsole); j > index; j--)
-				{
-					currentConsole[j + strlen(text)] = currentConsole[j];
-				}
-				int textCounter = 0;
-				for (int a = index; a < index+strlen(text); a++)
-				{
-					currentConsole[a] = text[textCounter];
-					textCounter += 1;
-				}
-			}
-			else
-			{
-				printf("Either there is no such a line or index in the text, or you wrote nothing as text.\n Please, try again!");
+				deallocate(mystring); deallocate(nameLoad); 
 				break;
 			}
-			deallocate(text);
-			printf("Text is successfully inserted.");
-			break;
-		}
-		case 7: {
-			int** positions = allocate(length, sizeof(int));
-			int** exactLocations = allocate(length, sizeof(int));
-			char** seekingText = allocate(length, sizeof(char));
-
-			printf("Enter text to search: \n");
-
-			int myLength = reallocate(seekingText, length);
-			int index1 = 0;
-			int myPosition = 0;
-
-			while (strstr(&currentConsole[index1], seekingText) != NULL) {
-				char* location = strstr(&currentConsole, seekingText);
-				index1 = location - currentConsole;
-				positions[myPosition] = index1;
-				myPosition++;
+			case 5: {
+				printf("Printing the current text console: %s\n", currentConsole);
+				break;
 			}
+			
+			case 6: {
+				int line = 0;
+				int index = 0;
+				char* text = allocate(length, sizeof(char)); 
 
-			int counter = 0; int line = 0; int positionIndex = 0; int exactIndex = 0;
+				printf("Insert the text by line and symbol index: \n");
+				printf("Enter line number: \n");
+				scanf("%i", &line);
+				printf("Enter symbol index: \n");
+				scanf("%i", &index);
+				printf("Enter text to insert: \n");
+				int myLength = reallocate(&text, &length);
 
-			for (int i = 0; i < strlen(currentConsole); i++)
-			{
-				if (i == '\n'){
-					line++;
-					counter = 0; 
-					continue;
-				}
-				else if (i == positions[positionIndex])
+				char searchConsole = (char)realloc(currentConsole, myLength * sizeof(char));
+				// strncat(currentConsole, text, sizeof(currentConsole) - strlen(text) - 1);
+			
+				int allLines = 1;
+				for (int i = 0; i<strlen(currentConsole); i++)
 				{
-					positionIndex++;
-					exactLocations[exactIndex] = line; exactIndex++;
-					exactLocations[exactIndex] = counter;
-				}
-				if (positionIndex + 1 > 17)
+					if (currentConsole[i] == '\n') {
+						allLines += 1;}}
+				if (line>=1 && line<=allLines && index>=0 && text!=NULL && index<=strlen(currentConsole))
 				{
+					for (int j = (int)strlen(currentConsole); j > index; j--)
+					{
+						currentConsole[j + strlen(text)] = currentConsole[j];
+					}
+					int textCounter = 0;
+					for (int a = index; a < index+strlen(text); a++)
+					{
+						currentConsole[a] = text[textCounter];
+						textCounter += 1;
+					}
+					printf("Text is successfully inserted.");
+				}
+				else
+				{
+					printf("Either there is no such a line or index in the text, or you wrote nothing as text.\n Please, try again!");
 					break;
 				}
-				counter++;
+				deallocate(text);
+				break;
 			}
-			//While strstr != Null шукаємо у певному рядку збіги за strstr. Якщо такий знайдений, то продовжуємо пошук з наступного індексу який вивів нам метод 
-			// Тепер коли у нас є адреса входження ітеруємося до індексу, дивимося рахуємо через counter індекс і скидаємо його коли отримуємо входження \n
-			printf("Text is present in the position/positions: \n");
-			for (int b = 0; b < length; b+=2)
-			{
-				printf("Row:%i - Index:%i\n", exactLocations[b], exactLocations[b+1]);
-			}
-			deallocate(seekingText); deallocate(positions); deallocate(exactLocations); deallocate(myLength);
-			break;
-		}
-		case 8: {
-			printf("Clearing the console \n");
-			deallocate(currentConsole);
-			currentConsole[0] = '\0';
-			break;
-		}
-		default: {
-			printf("There is no such an option, try again! \n");
-		}
-	}
-	printf("Program is shutting down...");
+			case 7: {
+				int* positions = allocate(length, sizeof(int));
+				int* exactLocations = allocate(length, sizeof(int));
+				char* seekingText = allocate(length, sizeof(char));
 
+				printf("Enter text to search: \n");
+
+				int myLength = reallocate(&seekingText, &length);
+				int index1 = 0;
+				int myPosition = 0;
+
+				char* searchArea = currentConsole;
+				while ((searchArea = strstr(searchArea, seekingText)) != NULL) {
+					index1 = searchArea - currentConsole;
+					positions[myPosition] = index1;
+					myPosition++;
+					searchArea += strlen(seekingText);
+					if (myPosition >= length) break;
+				}
+
+				int counter = 0; int line = 0; int positionIndex = 0; int exactIndex = 0;
+
+				for (int i = 0; i < strlen(currentConsole); i++)
+				{
+					if (currentConsole[i] == '\n'){
+						line++;
+						counter = 0; 
+						continue;
+					}
+					if (i == positions[positionIndex])
+					{
+						positionIndex++;
+						exactLocations[exactIndex] = line; exactIndex++;
+						exactLocations[exactIndex] = counter; exactIndex++;
+					}
+					if (positionIndex > 19)
+					{
+						break;
+					}
+					counter++;
+				}
+				//While strstr != Null шукаємо у певному рядку збіги за strstr. Якщо такий знайдений, то продовжуємо пошук з наступного індексу який вивів нам метод 
+				// Тепер коли у нас є адреса входження ітеруємося до індексу, дивимося рахуємо через counter індекс і скидаємо його коли отримуємо входження \n
+				printf("Text is present in the position/positions: \n");
+				for (int b = 0; b < exactIndex; b+=2)
+				{
+					printf("Row:%i - Index:%i\n", exactLocations[b], exactLocations[b+1]);
+				}
+				deallocate(seekingText); deallocate(positions); deallocate(exactLocations); deallocate(myLength);
+				break;
+			}
+			case 8: {
+				printf("Clearing the console \n");
+				currentConsole[0] = '\0';
+				break;
+			}
+			default: {
+				printf("There is no such an option, try again! \n");
+			}
+	}
+	deallocate(currentConsole);
+	printf("Program is shutting down...");
 	return 0;
 }
