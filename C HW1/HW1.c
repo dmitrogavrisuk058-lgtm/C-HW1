@@ -20,7 +20,8 @@ int reallocate(char** inputString, int* capacity) {
 	
 	if (myLength + 1 > *capacity)
 	{
-		*capacity = myLength + 30;
+		int preSize = *capacity;
+		*capacity = myLength + preSize;
 		char* addition = (char*)realloc(*inputString, *capacity * sizeof(char));
 		if (addition != NULL) { 
 			*inputString = addition; 
@@ -48,7 +49,7 @@ int main() {
 		int userInput;
 		printf("Enter your option. You can choose from: 1-Append, 2-New line, 3-Save, 4-Load, 5-Print, 6-Insert, 7-Search, 8-Clear, 9-Exit  \n");
 		scanf_s("%d", &userInput);
-		while (getchar() != '\n');
+		//while (getchar() != '\n');
 		switch (userInput) {
 			case 1: {
 
@@ -69,7 +70,12 @@ int main() {
 			}
 			case 2: {
 				printf("Start the new line: \n");
-				int newSize = (int)strlen(currentConsole) + 2;
+				int newSize = (int)strlen(currentConsole) + 5;
+				char* myLength = realloc(currentConsole, newSize * sizeof(char));
+				if (myLength == NULL) {
+					printf("Memory allocation error\n"); exit(-1);}
+
+				currentConsole = myLength;
 				strcat_s(currentConsole, newSize, "\n");
 				break;
 			}
@@ -141,10 +147,12 @@ int main() {
 				printf("Enter text to insert: \n");
 				int myLength = reallocate(&text, &length);
 
-				char* searchConsole = (char*)realloc(currentConsole, myLength * sizeof(char));
+				int newSize = myLength + 6 + (int)strlen(currentConsole);
+				char* searchConsole = (char*)realloc(currentConsole, newSize * sizeof(char));
 				if (searchConsole == NULL){
-					printf("Memory allocation error\n");exit(-1);}
-				// strncat(currentConsole, text, sizeof(currentConsole) - strlen(text) - 1);
+					printf("Memory allocation error\n");exit(-1);
+				}
+				currentConsole = searchConsole;
 			
 				int allLines = 1;
 				for (int i = 0; i<strlen(currentConsole); i++)
@@ -187,7 +195,8 @@ int main() {
 
 				printf("Enter text to search: \n");
 
-				int myLength = reallocate(&seekingText, &length);
+				int preSize = (int)strlen(currentConsole);
+				int myLength = reallocate(&seekingText, &preSize);
 				int index1 = 0;
 				int myPosition = 0;
 
@@ -239,7 +248,7 @@ int main() {
 			case 9: {
 				printf("Exiting editor.\n");
 				editorRuns = false;
-				deallocate(currentConsole);
+				//deallocate(currentConsole);
 				break;
 			}
 			default: {
@@ -247,7 +256,7 @@ int main() {
 			}
 		}
 	}
-	//deallocate(currentConsole);
+	deallocate(currentConsole);
 	printf("Program is shutting down...");
 	return 0;
 }
