@@ -7,27 +7,27 @@ void* allocate(int a, size_t mySize) {
 	void* arrStart = malloc(a * mySize);
 	if (arrStart == NULL)
 	{
-		printf("Memory allocation error!\n");
-		exit(1);
+		printf("Memory allocation error!\n");exit(-1);
 	}
 	return arrStart;
 }
 
 int reallocate(char** inputString, int* capacity) {
 	char transportArray[1000] = "";
-	scanf_s("%999s", transportArray);
+	scanf_s("%999s", transportArray, (unsigned int)sizeof(transportArray));
 	
-	int myLength = strlen(transportArray);
+	int myLength = (int)strlen(transportArray);
 	
 	if (myLength + 1 > *capacity)
 	{
-		*capacity = myLength + 50;
+		*capacity = myLength + 30;
 		char* addition = (char*)realloc(*inputString, *capacity * sizeof(char));
 		if (addition != NULL) { 
 			*inputString = addition; 
 		}
 	}
-	strcpy_s(*inputString, transportArray, 1000);
+	strcpy_s(*inputString, *capacity, transportArray);
+
 	return myLength;
 }
 
@@ -35,20 +35,20 @@ void deallocate(void* inputString) {
 	free(inputString);
 }
 
-int main() 
-{
+int main() {
 
 	bool editorRuns = true;
 	int length = 40;
 	char* currentConsole = allocate(length, sizeof(char));;
 	currentConsole[0] = '\0';
 	// Початкове виділення пам'яті
-	
+
 	while (editorRuns)
 	{
 		int userInput;
 		printf("Enter your option. You can choose from: 1-Append, 2-New line, 3-Save, 4-Load, 5-Print, 6-Insert, 7-Search, 8-Clear, 9-Exit  \n");
-		scanf("%d", &userInput);
+		scanf_s("%d", &userInput);
+		while (getchar() != '\n');
 		switch (userInput) {
 			case 1: {
 
@@ -56,25 +56,31 @@ int main()
 				printf("Enter text to append: \n");
 
 				int myLength = reallocate(&appendText, &length);
-				currentConsole = realloc(currentConsole, myLength * sizeof(char));
+				int newSize = myLength + 6 + (int)strlen(currentConsole);
+				char* caseAppend1 = realloc(currentConsole, newSize * sizeof(char));
+				if (caseAppend1 == NULL) {
+					printf("Memory allocation error\n");exit(-1);
+				}
 
-				strcat(currentConsole, appendText); 
+				currentConsole = caseAppend1;
+				strcat_s(currentConsole, newSize, appendText); 
 				deallocate(appendText);
 				break;
 			}
 			case 2: {
 				printf("Start the new line: \n");
-				strcat(currentConsole, "\n");
+				int newSize = (int)strlen(currentConsole) + 2;
+				strcat_s(currentConsole, newSize, "\n");
 				break;
 			}
 			case 3: {
 				char* nameSave = allocate(length, sizeof(char));
 				printf("Enter the file name for saving: \n");
-				scanf("%s", nameSave);
+				scanf_s("%s", nameSave, length);
+				FILE* file = NULL;
+				fopen_s(&file, nameSave, "w");
 
-				FILE* file = fopen(nameSave, "w");
-
-				if (file == NULL)
+				if (file != NULL)
 				{
 					fputs(currentConsole, file);
 					fclose(file);
@@ -89,7 +95,7 @@ int main()
 			case 4: {
 				char* nameLoad = allocate(length, sizeof(char));
 				printf("Enter the file name for loading: \n");
-				scanf("%s", nameLoad);
+				scanf_s("%s", nameLoad, length);
 
 				FILE* file = fopen(nameLoad, "r");
 				char* mystring = allocate(length, sizeof(char));
@@ -103,13 +109,13 @@ int main()
 				else
 				{
 					char* copyConsole = allocate(1000, sizeof(char));
-					strcpy(copyConsole, currentConsole);
+					strcpy_s(copyConsole, 1000, currentConsole);
 					currentConsole[0] = '\0';
 					while (fgets(mystring, 100, file) != NULL)
 					{
-						strcat(currentConsole, mystring);
+						strcat_s(currentConsole, 1000, mystring);
 					}
-					strcat(currentConsole, copyConsole);
+					strcat_s(currentConsole, 1000, copyConsole);
 					fclose(file);
 					printf("Text have been loaded successfully\n");
 					deallocate(copyConsole);
@@ -129,13 +135,15 @@ int main()
 
 				printf("Insert the text by line and symbol index: \n");
 				printf("Enter line number: \n");
-				scanf("%i", &line);
+				scanf_s("%i", &line);
 				printf("Enter symbol index: \n");
-				scanf("%i", &index);
+				scanf_s("%i", &index);
 				printf("Enter text to insert: \n");
 				int myLength = reallocate(&text, &length);
 
-				char searchConsole = (char)realloc(currentConsole, myLength * sizeof(char));
+				char* searchConsole = (char*)realloc(currentConsole, myLength * sizeof(char));
+				if (searchConsole == NULL){
+					printf("Memory allocation error\n");exit(-1);}
 				// strncat(currentConsole, text, sizeof(currentConsole) - strlen(text) - 1);
 			
 				int allLines = 1;
@@ -145,15 +153,22 @@ int main()
 						allLines += 1;}}
 				if (line>=1 && line<=allLines && index>=0 && text!=NULL && index<=strlen(currentConsole))
 				{
+					int currentLine = 1;
+					int consoleIndex = 0;
+					while (currentConsole[consoleIndex] != '\0' && currentLine < line) {
+						if (currentConsole[consoleIndex] == '\n') { currentLine++; }
+						consoleIndex++;
+					}
+					consoleIndex += index;
+
 					for (int j = (int)strlen(currentConsole); j > index; j--)
 					{
 						currentConsole[j + strlen(text)] = currentConsole[j];
 					}
-					int textCounter = 0;
+					
 					for (int a = index; a < index+strlen(text); a++)
 					{
-						currentConsole[a] = text[textCounter];
-						textCounter += 1;
+						currentConsole[consoleIndex + a] = text[a];
 					}
 					printf("Text is successfully inserted.");
 				}
@@ -178,7 +193,7 @@ int main()
 
 				char* searchArea = currentConsole;
 				while ((searchArea = strstr(searchArea, seekingText)) != NULL) {
-					index1 = searchArea - currentConsole;
+					index1 = (int)(searchArea - currentConsole);
 					positions[myPosition] = index1;
 					myPosition++;
 					searchArea += strlen(seekingText);
@@ -213,7 +228,7 @@ int main()
 				{
 					printf("Row:%i - Index:%i\n", exactLocations[b], exactLocations[b+1]);
 				}
-				deallocate(seekingText); deallocate(positions); deallocate(exactLocations); deallocate(myLength);
+				deallocate(seekingText); deallocate(positions); deallocate(exactLocations); //deallocate(myLength);
 				break;
 			}
 			case 8: {
@@ -221,11 +236,18 @@ int main()
 				currentConsole[0] = '\0';
 				break;
 			}
+			case 9: {
+				printf("Exiting editor.\n");
+				editorRuns = false;
+				deallocate(currentConsole);
+				break;
+			}
 			default: {
 				printf("There is no such an option, try again! \n");
 			}
+		}
 	}
-	deallocate(currentConsole);
+	//deallocate(currentConsole);
 	printf("Program is shutting down...");
 	return 0;
 }
