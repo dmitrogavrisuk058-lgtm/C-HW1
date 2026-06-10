@@ -34,10 +34,35 @@ int reallocate(char** inputString, int* capacity) {
 	return myLength;
 }
 
-int reallocDynamic(char** inputString, int* capacity) {
+void reallocDynamic(char** inputString, int* capacity) {
 	int memoryIncrease = 100;
-	*capacity += 100;
-	char* addition = (char*)realloc(*inputString, *capacity * sizeof(char));
+	memoryIncrease += *capacity;
+	char* addition = (char*)realloc(*inputString, memoryIncrease * sizeof(char));
+}
+
+void push(char** myStack, int* number, char* myConsole) { 
+	if (number = 5) free(myStack[4]);
+	if (number > 0) {
+		for (int i = number - 1; i > 0; i--) {
+			myStack[i] = myStack[i - 1];
+		}}
+	int mySize = (int)strlen(myConsole) + 1;
+	myStack[0] = (char*)malloc(mySize * sizeof(char));
+	strcpy(myStack[0], myConsole);
+	*number++;
+}
+
+char* pop(char** myStack, int* number) {
+	int mySize = (int)strlen(myStack[0]) + 1;
+	char* popConsole = (char*)malloc(mySize * sizeof(char));
+	strcpy(popConsole ,myStack[0]);
+	free(myStack[0]);
+	if (number > 1) {
+		for (int i = 0; i < (int)strlen(number - 1); i++) {
+			myStack[i] = myStack[i + 1];
+		}}
+	*number--;
+	return popConsole;
 }
 
 void deallocate(void* inputString) {
@@ -52,7 +77,10 @@ int main() {
 	char* currentConsole = allocate(length, sizeof(char));;
 	currentConsole[0] = '\0';
 	int allLines = 1;
+
+	int undoCount = 0; int redoCount = 0; int stackSize = 5;
 	char* copyBuffer = allocate(length, sizeof(char));
+	char* undoStack = malloc(stackSize * sizeof(char*)); char* redoStack[5] = malloc(stackSize * sizeof(char*));
 
 	while (editorRuns)
 	{
@@ -75,6 +103,7 @@ int main() {
 				currentConsole = caseAppend1;
 				strcat_s(currentConsole, newSize, appendText); 
 				deallocate(appendText);
+				push(&undoStack, &undoCount, &currentConsole);
 				break;
 			}
 			case 2: {
@@ -88,6 +117,7 @@ int main() {
 				strcat_s(currentConsole, newSize, "\n");
 				allLines += 1;
 				while (getchar() != '\n');
+				push(&undoStack, &undoCount, &currentConsole);
 				break;
 			}
 			case 3: {
@@ -118,18 +148,13 @@ int main() {
 				char* mystring = allocate(length, sizeof(char));
 
 				
-				if (file == NULL)
-				{
-					printf("Error opening file. This file might not exist or is empty(\n");
-					
-				}
-				else
-				{
+				if (file == NULL){
+					printf("Error opening file. This file might not exist or is empty(\n");}
+				else{
 					char* copyConsole = allocate(maxSize, sizeof(char));
 					strcpy_s(copyConsole, maxSize, currentConsole);
 					currentConsole[0] = '\0';
-					while (fgets(mystring, 100, file) != NULL)
-					{
+					while (fgets(mystring, 100, file) != NULL){
 						strcat_s(currentConsole, maxSize, mystring);
 					}
 					strcat_s(currentConsole, maxSize, copyConsole);
@@ -175,14 +200,12 @@ int main() {
 					}
 					consoleIndex += index;
 
-					for (int j = (int)strlen(currentConsole); j >= consoleIndex; j--)
-					{
+					for (int j = (int)strlen(currentConsole); j >= consoleIndex; j--){
 						currentConsole[j + strlen(text)] = currentConsole[j];
 					}
 					
 					int b = 0;
-					for (int a = consoleIndex; a < consoleIndex+strlen(text); a++)
-					{
+					for (int a = consoleIndex; a < consoleIndex+strlen(text); a++){
 						currentConsole[a] = text[b];
 						b++;
 					}
@@ -193,6 +216,7 @@ int main() {
 					printf("Either there is no such a line or index in the text, or you wrote nothing as text.\n Please, try again!\n");
 				}
 				deallocate(text);
+				push(&undoStack, &undoCount, &currentConsole);
 				break;
 			}
 			case 7: {
@@ -225,21 +249,16 @@ int main() {
 						counter = 0; 
 						continue;
 					}
-					if (i == positions[positionIndex])
-					{
+					if (i == positions[positionIndex]){
 						positionIndex++;
 						exactLocations[exactIndex] = line; exactIndex++;
 						exactLocations[exactIndex] = counter; exactIndex++;
 					}
-					if (positionIndex > 19)
-					{
-						break;
-					}
+					if (positionIndex > 19) break;
 					counter++;
 				}
 				printf("Text is present in the position/positions: \n");
-				for (int b = 0; b < exactIndex; b+=2)
-				{
+				for (int b = 0; b < exactIndex; b+=2){
 					printf("Row:%i - Index:%i\n", exactLocations[b], exactLocations[b+1]);
 				}
 				deallocate(seekingText); deallocate(positions); deallocate(exactLocations); 
@@ -248,6 +267,7 @@ int main() {
 			case 8: {
 				printf("Clearing the console \n");
 				currentConsole[0] = '\0';
+				push(&undoStack, &undoCount, &currentConsole);
 				break;
 			}
 			case 9: {
@@ -282,9 +302,21 @@ int main() {
 				}
 				else{
 					printf("Either there is no such a line or index in the text.\n Please, try again!\n");}
+				push(&undoStack, &undoCount, &currentConsole);
 				break;
 			}
-			
+			case 10: {
+				printf("Undo the console: \n");
+				currentConsole = pop(undoStack, undoCount);
+				push(redoStack, redoCount, currentConsole);
+				printf("Console is undone: \n");
+			}
+			case 11: {
+				printf("Redo the console: \n");
+				currentConsole = pop(redoStack, redoCount);
+				push(undoStack, undoCount, currentConsole);
+				printf("Console is redone: \n");
+			}
 			case 12: {
 				int line = 0;
 				int index = 0;
@@ -327,6 +359,7 @@ int main() {
 					printf("Text is successfully cut.\n");
 				}
 				else { printf("Either there is no such a line or index in the text.\n Please, try again!\n"); }
+				push(&undoStack, &undoCount, &currentConsole);
 				break;
 			}
 			case 13: {
@@ -361,6 +394,7 @@ int main() {
 				else{
 					printf("Either there is no such a line or index in the text.\n Please, try again!\n");
 				}
+				push(&undoStack, &undoCount, &currentConsole);
 				break;
 			}
 			case 14: {
@@ -437,6 +471,7 @@ int main() {
 				}
 				else {
 					printf("Either there is no such a line or index in the text.\n Please, try again!\n");}
+				push(&undoStack, &undoCount, &currentConsole);
 				break;
 			}
 			case 16: {

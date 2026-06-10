@@ -142,7 +142,7 @@
     <ClCompile Include="C theory.c" />
     <ClCompile Include="HW1.c" />
     <ClCompile Include="Practise 1.c" />
-    <ClCompile Include="Practise2.c" />
+    <ClCompile Include="Test.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

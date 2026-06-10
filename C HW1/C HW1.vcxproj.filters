@@ -24,7 +24,7 @@
     <ClCompile Include="Practise 1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Practise2.c">
+    <ClCompile Include="Test.txt">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
