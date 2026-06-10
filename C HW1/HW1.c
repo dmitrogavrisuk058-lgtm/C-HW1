@@ -13,9 +13,12 @@ void* allocate(int a, size_t mySize) {
 }
 
 int reallocate(char** inputString, int* capacity) {
-	char transportArray[1000] = "";
-	scanf_s("%999s", transportArray, (unsigned int)sizeof(transportArray));
-	
+	char transportArray[2000] = "";
+	if (fgets(transportArray, (int)sizeof(transportArray), stdin) == NULL) {
+		printf("You wrote nothing into console"); return 0;
+	}
+	fgets(transportArray, (int)sizeof(transportArray), stdin);
+	transportArray[strcspn(transportArray, "\n")] = '\0';
 	int myLength = (int)strlen(transportArray);
 	
 	if (myLength + 1 > *capacity)
@@ -28,8 +31,13 @@ int reallocate(char** inputString, int* capacity) {
 		}
 	}
 	strcpy_s(*inputString, *capacity, transportArray);
-
 	return myLength;
+}
+
+int reallocDynamic(char** inputString, int* capacity) {
+	int memoryIncrease = 100;
+	*capacity += 100;
+	char* addition = (char*)realloc(*inputString, *capacity * sizeof(char));
 }
 
 void deallocate(void* inputString) {
@@ -40,19 +48,20 @@ int main() {
 
 	bool editorRuns = true;
 	int length = 40;
+	int maxSize = 2000;
 	char* currentConsole = allocate(length, sizeof(char));;
 	currentConsole[0] = '\0';
-	// Початкове виділення пам'яті
+	int allLines = 1;
+	char* copyBuffer = allocate(length, sizeof(char));
 
 	while (editorRuns)
 	{
 		int userInput;
-		printf("Enter your option. You can choose from: 1-Append, 2-New line, 3-Save, 4-Load, 5-Print, 6-Insert, 7-Search, 8-Clear, 9-Exit  \n");
+		printf("Enter your option. You can choose from: 1-Append, 2-New line, 3-Save, 4-Load, 5-Print, 6-Insert, 7-Search, 8-Clear,  \n");
+		printf(" 9-Delete, 10-Undo, 11-Redo, 12-Cut, 13-Paste, 14-Copy, 15-Insert&Replace, 16-Exit, 17-Print copy.\n");
 		scanf_s("%d", &userInput);
-		//while (getchar() != '\n');
 		switch (userInput) {
 			case 1: {
-
 				char* appendText = allocate(length, sizeof(char));
 				printf("Enter text to append: \n");
 
@@ -77,6 +86,8 @@ int main() {
 
 				currentConsole = myLength;
 				strcat_s(currentConsole, newSize, "\n");
+				allLines += 1;
+				while (getchar() != '\n');
 				break;
 			}
 			case 3: {
@@ -114,14 +125,14 @@ int main() {
 				}
 				else
 				{
-					char* copyConsole = allocate(1000, sizeof(char));
-					strcpy_s(copyConsole, 1000, currentConsole);
+					char* copyConsole = allocate(maxSize, sizeof(char));
+					strcpy_s(copyConsole, maxSize, currentConsole);
 					currentConsole[0] = '\0';
 					while (fgets(mystring, 100, file) != NULL)
 					{
-						strcat_s(currentConsole, 1000, mystring);
+						strcat_s(currentConsole, maxSize, mystring);
 					}
-					strcat_s(currentConsole, 1000, copyConsole);
+					strcat_s(currentConsole, maxSize, copyConsole);
 					fclose(file);
 					printf("Text have been loaded successfully\n");
 					deallocate(copyConsole);
@@ -154,12 +165,7 @@ int main() {
 				}
 				currentConsole = searchConsole;
 			
-				int allLines = 1;
-				for (int i = 0; i<strlen(currentConsole); i++)
-				{
-					if (currentConsole[i] == '\n') {
-						allLines += 1;}}
-				if (line>=1 && line<=allLines && index>=0 && text!=NULL && index<=strlen(currentConsole))
+				if (line>=0 && line <= allLines && index >= 0 && text != NULL && index <= strlen(currentConsole))
 				{
 					int currentLine = 1;
 					int consoleIndex = 0;
@@ -169,21 +175,22 @@ int main() {
 					}
 					consoleIndex += index;
 
-					for (int j = (int)strlen(currentConsole); j > index; j--)
+					for (int j = (int)strlen(currentConsole); j >= consoleIndex; j--)
 					{
 						currentConsole[j + strlen(text)] = currentConsole[j];
 					}
 					
-					for (int a = index; a < index+strlen(text); a++)
+					int b = 0;
+					for (int a = consoleIndex; a < consoleIndex+strlen(text); a++)
 					{
-						currentConsole[consoleIndex + a] = text[a];
+						currentConsole[a] = text[b];
+						b++;
 					}
 					printf("Text is successfully inserted.");
 				}
 				else
 				{
-					printf("Either there is no such a line or index in the text, or you wrote nothing as text.\n Please, try again!");
-					break;
+					printf("Either there is no such a line or index in the text, or you wrote nothing as text.\n Please, try again!\n");
 				}
 				deallocate(text);
 				break;
@@ -230,14 +237,12 @@ int main() {
 					}
 					counter++;
 				}
-				//While strstr != Null шукаємо у певному рядку збіги за strstr. Якщо такий знайдений, то продовжуємо пошук з наступного індексу який вивів нам метод 
-				// Тепер коли у нас є адреса входження ітеруємося до індексу, дивимося рахуємо через counter індекс і скидаємо його коли отримуємо входження \n
 				printf("Text is present in the position/positions: \n");
 				for (int b = 0; b < exactIndex; b+=2)
 				{
 					printf("Row:%i - Index:%i\n", exactLocations[b], exactLocations[b+1]);
 				}
-				deallocate(seekingText); deallocate(positions); deallocate(exactLocations); //deallocate(myLength);
+				deallocate(seekingText); deallocate(positions); deallocate(exactLocations); 
 				break;
 			}
 			case 8: {
@@ -246,9 +251,200 @@ int main() {
 				break;
 			}
 			case 9: {
+				int line = 0;
+				int index = 0;
+				int lastDelElem = 0;
+
+				printf("Delete text by line and symbol index: \n");
+				printf("Enter line number: \n");
+				scanf_s("%i", &line);
+				printf("Enter first index: \n");
+				scanf_s("%i", &index);
+				printf("Enter last index: \n");
+				scanf_s("%i", &lastDelElem);
+
+				if (line >= 0 && line <= allLines && index >= 0 && index <= strlen(currentConsole))
+				{
+					int currentLine = 1;
+					int consoleIndex = 0;
+					while (currentConsole[consoleIndex] != '\0' && currentLine < line) {
+						if (currentConsole[consoleIndex] == '\n') {currentLine++; }
+						consoleIndex++;
+					}
+					consoleIndex += index;
+					int upperValue = consoleIndex + lastDelElem - index;
+
+					for (int j = consoleIndex; j <= (int)strlen(currentConsole)-lastDelElem+index; j++){
+						currentConsole[j] = currentConsole[upperValue];
+						upperValue++;}
+				
+					printf("Text is successfully deleted.\n");
+				}
+				else{
+					printf("Either there is no such a line or index in the text.\n Please, try again!\n");}
+				break;
+			}
+			
+			case 12: {
+				int line = 0;
+				int index = 0;
+				int lastCutElem = 0;
+				int localLength = length;
+
+				printf("Cut text by line and symbol index: \n");
+				printf("Enter line number: \n");
+				scanf_s("%i", &line);
+				printf("Enter first index: \n");
+				scanf_s("%i", &index);
+				printf("Enter last index: \n");
+				scanf_s("%i", &lastCutElem);
+
+				if (line >= 0 && line <= allLines && index >= 0 && index <= strlen(currentConsole))
+				{
+					if (copyBuffer != NULL) copyBuffer[0] = '\0';
+
+					int currentLine = 1;
+					int consoleIndex = 0;
+					while (currentConsole[consoleIndex] != '\0' && currentLine < line) {
+						if (currentConsole[consoleIndex] == '\n') { currentLine++; }
+						consoleIndex++;
+					}
+					consoleIndex += index;
+					
+					int bufferIndex = 0;
+					int upperValue = consoleIndex + lastCutElem - index;
+					for (int j = consoleIndex; j <= (int)strlen(currentConsole) - lastCutElem + index; j++)
+					{
+						if (bufferIndex >= localLength) {
+							reallocDynamic(&copyBuffer, &localLength);
+						}
+						copyBuffer[bufferIndex] = currentConsole[j];
+						currentConsole[j] = currentConsole[upperValue];
+						upperValue++; bufferIndex++;
+					}
+					if (bufferIndex >= localLength) { reallocDynamic(&copyBuffer, &localLength); }
+					copyBuffer[bufferIndex] = '\0';
+					printf("Text is successfully cut.\n");
+				}
+				else { printf("Either there is no such a line or index in the text.\n Please, try again!\n"); }
+				break;
+			}
+			case 13: {
+				int line = 0;
+				int index = 0;
+
+				printf("Paste text by line and symbol index: \n");
+				printf("Enter line number: \n");
+				scanf_s("%i", &line);
+				printf("Enter symbol index: \n");
+				scanf_s("%i", &index);
+
+				if (line >= 0 && line <= allLines && index >= 0 && index <= strlen(currentConsole))
+				{
+					int currentLine = 1;
+					int consoleIndex = 0;
+					while (currentConsole[consoleIndex] != '\0' && currentLine < line) {
+						if (currentConsole[consoleIndex] == '\n') { currentLine++; }
+						consoleIndex++;
+					}
+					consoleIndex += index;
+
+					for (int j = (int)strlen(currentConsole); j >= consoleIndex; j--){
+						currentConsole[j + strlen(copyBuffer)] = currentConsole[j];}
+
+					int b = 0;
+					for (int a = consoleIndex; a < consoleIndex + strlen(copyBuffer); a++){
+						currentConsole[a] = copyBuffer[b];
+						b++;}
+					printf("Text is successfully pasted.\n");
+				}
+				else{
+					printf("Either there is no such a line or index in the text.\n Please, try again!\n");
+				}
+				break;
+			}
+			case 14: {
+				int line = 0;
+				int index = 0;
+				int lastCopyElem = 0;
+				int localLength = length;
+		
+				printf("Copy text by line and symbol index: \n");
+				printf("Enter line number: \n");
+				scanf_s("%i", &line);
+				printf("Enter first index: \n");
+				scanf_s("%i", &index);
+				printf("Enter last index: \n");
+				scanf_s("%i", &lastCopyElem);
+				
+				if (line >= 0 && line <= allLines && index >= 0 && lastCopyElem >= 0 && lastCopyElem > index && index <= strlen(currentConsole)){
+					if (copyBuffer != NULL) copyBuffer[0] = '\n';
+
+					int currentLine = 1;
+					int consoleIndex = 0;
+					while (currentConsole[consoleIndex] != '\0' && currentLine < line) {
+						if (currentConsole[consoleIndex] == '\n') { currentLine++; }
+						consoleIndex++;
+					}
+					consoleIndex += index;
+
+					int bufferIndex = 0;
+					for (int j = consoleIndex; j <= consoleIndex + lastCopyElem + index; j++){
+						if (bufferIndex >= localLength) {
+							reallocDynamic(&copyBuffer, &localLength);
+						}
+						copyBuffer[bufferIndex] = currentConsole[j];
+						bufferIndex++;
+					}
+					if (bufferIndex >= localLength) {reallocDynamic(&copyBuffer, &localLength);}
+					copyBuffer[bufferIndex] = '\0';
+					printf("Text is successfully copied.\n");
+				}
+				else{printf("Either there is no such a line or index in the text.\n Please, try again!\n");}
+				break;
+			}
+			case 15: {
+				int line = 0;
+				int index = 0;
+				char* text = allocate(length, sizeof(char));
+
+				printf("Delete text by line and symbol index: \n");
+				printf("Enter line number: \n");
+				scanf_s("%i", &line);
+				printf("Enter start index: \n");
+				scanf_s("%i", &index);
+				printf("Enter replacing text: \n");
+				fgets(text, (int)sizeof(text), stdin);
+
+				if (line >= 0 && line <= allLines && index >= 0 && index <= strlen(currentConsole))
+				{
+					int currentLine = 1;
+					int consoleIndex = 0;
+					while (currentConsole[consoleIndex] != '\0' && currentLine < line) {
+						if (currentConsole[consoleIndex] == '\n') { currentLine++; }
+						consoleIndex++;
+					}
+					consoleIndex += index;
+					int upperValue = consoleIndex + strlen(text) - index;
+
+					for (int j = consoleIndex; j <= (int)strlen(currentConsole) - strlen(text) + index; j++) {
+						currentConsole[j] = currentConsole[upperValue];
+						upperValue++;
+					}
+
+					printf("Text is successfully replaced.\n");
+				}
+				else {
+					printf("Either there is no such a line or index in the text.\n Please, try again!\n");}
+				break;
+			}
+			case 16: {
 				printf("Exiting editor.\n");
 				editorRuns = false;
-				//deallocate(currentConsole);
+				break;
+			}
+			case 17: {
+				printf("%s\n", copyBuffer);
 				break;
 			}
 			default: {
