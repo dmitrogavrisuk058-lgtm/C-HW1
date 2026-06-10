@@ -414,7 +414,7 @@ int main() {
 				printf("Enter start index: \n");
 				scanf_s("%i", &index);
 				printf("Enter replacing text: \n");
-				fgets(text, (int)sizeof(text), stdin);
+				int myLength = reallocate(&text, &length);
 
 				if (line >= 0 && line <= allLines && index >= 0 && index <= strlen(currentConsole))
 				{
@@ -425,11 +425,12 @@ int main() {
 						consoleIndex++;
 					}
 					consoleIndex += index;
-					int upperValue = consoleIndex + strlen(text) - index;
+					int upperValue = consoleIndex + strlen(text) - index; //index - індекс початку заміни
 
-					for (int j = consoleIndex; j <= (int)strlen(currentConsole) - strlen(text) + index; j++) {
-						currentConsole[j] = currentConsole[upperValue];
-						upperValue++;
+					int textInd = 0;
+					for (int j = consoleIndex; j < upperValue ; j++) {
+						currentConsole[j] = text[textInd];
+						textInd++;
 					}
 
 					printf("Text is successfully replaced.\n");
